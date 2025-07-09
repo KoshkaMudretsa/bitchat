@@ -6,10 +6,11 @@
 // For more information, see <https://unlicense.org>
 //
 
-import SwiftUI
-#if os(iOS)
+#if canImport(LinkPresentation)
 import LinkPresentation
 #endif
+
+import SwiftUI
 
 struct LinkPreviewView: View {
     let url: URL
