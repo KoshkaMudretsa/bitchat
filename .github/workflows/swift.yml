@@ -27,17 +27,16 @@ jobs:
           pod install
         fi
 
-  - name: Build and archive for iOS
-    run: |
-      SCHEME="bitchat"
-      xcodebuild -project bitchat.xcodeproj \
-        -scheme "$SCHEME" \
-        -sdk iphoneos \
-        -configuration Release \
-        -archivePath $PWD/build/App.xcarchive \
-        archive
+    - name: Build and archive for iOS
+      run: |
+        SCHEME="bitchat"
+        xcodebuild -project bitchat.xcodeproj \
+          -scheme "$SCHEME" \
+          -sdk iphoneos \
+          -configuration Release \
+          -archivePath $PWD/build/App.xcarchive \
+          archive
 
-      
     - name: Export IPA
       run: |
         mkdir -p build/export
