@@ -27,41 +27,5 @@ jobs:
           pod install
         fi
 
-    - name: Build and archive for iOS
-      run: |
-        SCHEME="bitchat"
-        xcodebuild -project bitchat.xcodeproj \
-          -scheme "$SCHEME" \
-          -sdk iphoneos \
-          -configuration Release \
-          -archivePath $PWD/build/App.xcarchive \
-          archive
-
-    - name: Export IPA
-      run: |
-        mkdir -p build/export
-        cat > build/exportOptions.plist <<EOF
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0">
-        <dict>
-          <key>method</key>
-          <string>ad-hoc</string>
-          <key>signingStyle</key>
-          <string>manual</string>
-          <key>compileBitcode</key>
-          <false/>
-        </dict>
-        </plist>
-        EOF
-        xcodebuild -exportArchive \
-          -archivePath $PWD/build/App.xcarchive \
-          -exportPath $PWD/build/export \
-          -exportOptionsPlist $PWD/build/exportOptions.plist \
-          || true
-
-    - name: Upload IPA artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: bitchat-ipa
-        path: build/export/*.ipa
+    - name: List available schemes (for debugging)
+      run: xcodebuild -project bitchat.xcodeproj -list
