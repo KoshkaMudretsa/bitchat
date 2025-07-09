@@ -30,7 +30,7 @@ jobs:
     - name: List available schemes (for debugging)
       run: xcodebuild -project bitchat.xcodeproj -list
 
-    - name: Build and archive for iOS
+    - name: Build and archive for iOS (unsigned)
       run: |
         SCHEME="bitchat_iOS"
         xcodebuild -project bitchat.xcodeproj \
@@ -38,9 +38,12 @@ jobs:
           -sdk iphoneos \
           -configuration Release \
           -archivePath $PWD/build/App.xcarchive \
-          archive
+          archive \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO
 
-    - name: Export IPA
+    - name: Export IPA (unsigned)
       run: |
         mkdir -p build/export
         cat > build/exportOptions.plist <<EOF
@@ -61,6 +64,9 @@ jobs:
           -archivePath $PWD/build/App.xcarchive \
           -exportPath $PWD/build/export \
           -exportOptionsPlist $PWD/build/exportOptions.plist \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO \
           || true
 
     - name: Upload IPA artifact
