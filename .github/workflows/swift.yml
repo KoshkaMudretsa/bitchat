@@ -1,22 +1,54 @@
-# This workflow will build a Swift project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-swift
-
-name: Swift
+name: Build iOS IPA
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
-
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: swift build -v
-    - name: Run tests
-      run: swift test -v
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.2.app
+
+      - name: Build and archive app
+        run: |
+          set -e
+          # Update these values to match your workspace/scheme
+          WORKSPACE="$(ls *.xcworkspace | head -n 1 || true)"
+          PROJECT="$(ls *.xcodeproj | head -n 1 || true)"
+          SCHEME="$(xcodebuild -list | grep '    ' | head -n 1 | xargs)"
+          if [ -n "$WORKSPACE" ]; then
+            xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release -sdk iphoneos -archivePath $PWD/build/App.xcarchive archive
+          else
+            xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration Release -sdk iphoneos -archivePath $PWD/build/App.xcarchive archive
+          fi
+
+      - name: Export .ipa
+        run: |
+          mkdir -p build/export
+          # Create a minimal exportOptions.plist for ad-hoc (unsigned) export
+          cat > build/exportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>ad-hoc</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>compileBitcode</key>
+            <false/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive -archivePath $PWD/build/App.xcarchive -exportPath $PWD/build/export -exportOptionsPlist $PWD/build/exportOptions.plist || true
+
+      - name: Upload .ipa as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitchat-ipa
+          path: build/export/*.ipa
